@@ -17,7 +17,7 @@
         <div class="col-lg-5 col-12">
             <div class="container w-100">
                 <div id="auth-left" class="text-center">
-                    <h1>HETTIE PROFESSIONAL HAIRSTYLIST</h1><br>
+                    <h1>zxc PROFESSIONAL HAIRSTYLIST</h1><br>
                     <!-- <img src="assets/images/logocv.png" alt="Logo" class="mb-4" style="max-width: 250px;"> -->
                     <form action="login-act.php" method="post">
                         <div class="form-group position-relative has-icon-left mb-4">
