@@ -1,6 +1,6 @@
 <?php
-require __DIR__ . '../include/conn.php';
-require __DIR__ . '../include/session_check.php';
+require 'include/conn.php';
+require 'include/session_check.php';
 require "layout/head.php";
 
 // Redirect if not logged in
