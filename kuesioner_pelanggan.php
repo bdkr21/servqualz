@@ -44,7 +44,7 @@ if (isset($_GET['kode_transaksi'])) {
 
                     // Debugging: Check if there are any active pernyataan
                     if ($result_pernyataan->num_rows > 0) {
-                        echo "<h4>Perusahaan Kuesioner</h4>"; // Debugging message
+                        echo "<h4>Debug List Kuesioner</h4>"; // Debugging message
                         echo "<ul>";
 
                         // Loop through the pernyataan and display them
