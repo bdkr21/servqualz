@@ -81,10 +81,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             "account" => "1753812583fa83a11a198d5a7f0bf77a1987bcd00668890e679d008", // Replace with your unique account ID
                             "recipient" => $no_telp, // Customer phone number
                             "type" => "text",
-                            "message" => "Terima kasih telah melakukan transaksi di HETTIE PROFESSIONAL HAIRSTYLIST! Kode transaksi Anda adalah: " . $kode_transaksi . ".\n\n" .
+                            "message" => "Terima kasih telah melakukan transaksi di HETTIE PROFESSIONAL HAIRSTYLIST! Kode transaksi Anda adalah: *" . $kode_transaksi . "*.\n\n" .
                             "Kode transaksi ini dapat digunakan untuk mengisi **kuesioner** dan memberikan **keluhan** melalui website kami. " .
                             "Silakan gunakan kode transaksi ini pada halaman yang sesuai untuk memberikan masukan dan feedback tentang layanan kami.\n\n" .
-                            "Kami menghargai partisipasi Anda dalam membantu kami meningkatkan kualitas layanan kami.\n\n" .
+                            "Kami menghargai partisipasi Anda dalam membantu kami meningkatkan kualitas layanan kami. https://servqualz.chandramlnh.my.id/index_pelanggan.php\n\n" .
                             "Jika ada pertanyaan, jangan ragu untuk menghubungi kami."
                         ];
 
