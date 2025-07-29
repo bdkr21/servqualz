@@ -24,28 +24,39 @@ if (isset($_GET['kode_transaksi'])) {
             $nama_pelanggan = $row_transaksi['nama'];
             $jenis_layanan_transaksi = $row_transaksi['jenis_layanan'];  // Get jenis layanan from transaction
 
+            // Debugging: Print the transaction details
+            echo "<pre>Transaction details: ";
+            print_r($row_transaksi);
+            echo "</pre>";
+
             // Check if the transaction status is 'lunas'
             if ($pembayaran == 'lunas') {
-                // Query to fetch the kuesioner where status is 'publish' and dimensi_layanan matches the transaction's services
+                // Step 1: Query to fetch data_kuesioner where status is 'publish' and jenis_layanan matches the transaction's services
                 $query_kuesioner = "SELECT id_data_kuesioner, nama_kuesioner, dimensi_layanan 
                                     FROM data_kuesioner 
                                     WHERE status = 'publish' 
-                                    AND FIND_IN_SET(?, dimensi_layanan)";
+                                    AND FIND_IN_SET(?, dimensi_layanan)";  // Using FIND_IN_SET for multi-value matching
 
                 if ($stmt_kuesioner = $db->prepare($query_kuesioner)) {
                     $stmt_kuesioner->bind_param("s", $jenis_layanan_transaksi);  // Use "s" for string binding
                     $stmt_kuesioner->execute();
                     $result_kuesioner = $stmt_kuesioner->get_result();
 
-                    // Check if there are any kuesioners
+                    // Debugging: Check if there are any kuesioners
                     if ($result_kuesioner->num_rows > 0) {
                         // Loop through the kuesioners and display the active pernyataan for each
+                        echo "<h4>Kuesioner Results:</h4>"; // Debugging message
                         while ($row_kuesioner = $result_kuesioner->fetch_assoc()) {
                             $id_data_kuesioner = $row_kuesioner['id_data_kuesioner'];
                             $nama_kuesioner = $row_kuesioner['nama_kuesioner'];
                             $dimensi_layanan = $row_kuesioner['dimensi_layanan'];  // Get dimensi_layanan
 
-                            // Query to fetch active pernyataan for this kuesioner and matching dimensi_layanan
+                            // Debugging: Print dimensi_layanan from data_kuesioner
+                            echo "<pre>Dimensi Layanan in Kuesioner: ";
+                            print_r($dimensi_layanan); // This will show the value of dimensi_layanan
+                            echo "</pre>";
+
+                            // Step 2: Fetch active pernyataan for this kuesioner and matching dimensi_layanan
                             $query_pernyataan = "SELECT p.pernyataan 
                                                  FROM data_pernyataan p 
                                                  WHERE p.id_data_kuesioner = ? 
@@ -57,12 +68,7 @@ if (isset($_GET['kode_transaksi'])) {
                                 $stmt_pernyataan->execute();
                                 $result_pernyataan = $stmt_pernyataan->get_result();
 
-                                // Check for query errors
-                                if (!$result_pernyataan) {
-                                    die('Query failed: ' . $db->error);
-                                }
-
-                                // Check if there are any active pernyataan
+                                // Debugging: Check if there are any active pernyataan
                                 if ($result_pernyataan->num_rows > 0) {
                                     echo "<h5>$nama_kuesioner</h5>";
                                     echo "<ul>";
@@ -72,10 +78,16 @@ if (isset($_GET['kode_transaksi'])) {
                                     }
 
                                     echo "</ul>";
+                                } else {
+                                    // Debugging: No active pernyataan found
+                                    echo "<p>No active pernyataan found for this kuesioner.</p>";
                                 }
                                 $stmt_pernyataan->close();
                             }
                         }
+                    } else {
+                        // Debugging: No kuesioner found
+                        echo "<p>No kuesioner found with the status 'publish'.</p>";
                     }
                     $stmt_kuesioner->close();
                 }
