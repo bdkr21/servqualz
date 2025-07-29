@@ -1,6 +1,6 @@
 <?php
 // Ensure the database connection is available
-require __DIR__ . '/../include/conn.php';
+require __DIR__ . '/include/conn.php';
 
 // Get the ID of the customer to delete
 if (isset($_GET['id'])) {

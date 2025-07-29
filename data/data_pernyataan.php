@@ -22,7 +22,7 @@ if (!$result) {
                 <table class="table">
                     <thead>
                         <tr>
-                            <th scope="col">#</th>
+                            <th scope="col">No</th>
                             <th scope="col">Dimensi Layanan</th>
                             <th scope="col">Pernyataan</th>
                             <th scope="col">Rekomendasi Perbaikan</th>

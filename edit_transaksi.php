@@ -143,18 +143,24 @@ if (isset($_GET['id'])) {
                                     </select>
                                 </div>
 
-                                <div class="form-group">
+                               <div class="form-group">
                                     <label for="jenis_layanan">Jenis Layanan:</label><br>
                                     <?php
-                                    $services = ['Service A', 'Service B', 'Service C'];  // Add the available services here
-                                    $selected_services = explode(',', $transaction['jenis_layanan']);  // Split the comma-separated string into an array
-                                    foreach ($services as $service) {
-                                        $checked = in_array($service, $selected_services) ? 'checked' : '';
-                                        echo "<label><input type='checkbox' name='jenis_layanan[]' value='$service' $checked> $service</label><br>";
+                                    // Query to fetch available layanan (services)
+                                    $query_layanan = "SELECT id_jenis_layanan, jenis_layanan FROM layanan";
+                                    $result_layanan = $db->query($query_layanan);
+
+                                    // Retrieve the current selected services for the transaction
+                                    $selected_services = explode(',', $transaction['jenis_layanan']);  // Assuming 'jenis_layanan' is stored as a comma-separated string
+
+                                    // Loop through and generate checkboxes
+                                    while ($row_layanan = $result_layanan->fetch_assoc()) {
+                                        // Check if the service is selected for this transaction
+                                        $checked = in_array($row_layanan['jenis_layanan'], $selected_services) ? 'checked' : '';
+                                        echo "<label><input type='checkbox' name='jenis_layanan[]' value='{$row_layanan['jenis_layanan']}' $checked> {$row_layanan['jenis_layanan']}</label><br>";
                                     }
                                     ?>
                                 </div>
-
                                 <button type="submit" class="btn btn-primary">Update Transaksi</button>
                             </form>
                         </div>

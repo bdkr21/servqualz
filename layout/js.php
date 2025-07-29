@@ -22,4 +22,18 @@
     });
   <?php } ?>
 </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Apply Flatpickr to Tanggal Lahir (Birthdate)
+        flatpickr("#tanggal_lahir", {
+            dateFormat: "Y-m-d",  // Set the date format as YYYY-MM-DD
+            maxDate: "today",     // Limit the date selection to today or earlier
+        });
 
+        // Apply Flatpickr to Tanggal Transaksi (Transaction Date) with Today's Date as Default
+        flatpickr("#tanggal_transaksi", {
+            dateFormat: "Y-m-d",  // Set the date format as YYYY-MM-DD
+            defaultDate: "today", // Set today's date as default
+        });
+    });
+</script>
