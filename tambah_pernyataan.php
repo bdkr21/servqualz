@@ -3,25 +3,29 @@
 require __DIR__ . '/include/conn.php';
 require __DIR__ . '/include/session_check.php';
 require "layout/head.php";
+
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get the data from the form
     $dimensi_layanan = $_POST['dimensi_layanan'];
     $pernyataan = $_POST['pernyataan'];
     $rekomendasi_perbaikan = $_POST['rekomendasi_perbaikan'];
-    $status = $_POST['status'];
+    $status = $_POST['status']; // The status (whether the statement is active or not)
+    
+    // Handle multiple jenis_layanan selections
+    $jenis_layanan = isset($_POST['jenis_layanan']) ? implode(',', $_POST['jenis_layanan']) : '';  // Store the selected services as a comma-separated string
 
     // Validate inputs
-    if (empty($dimensi_layanan) || empty($pernyataan) || empty($rekomendasi_perbaikan) || empty($status)) {
+    if (empty($dimensi_layanan) || empty($pernyataan) || empty($rekomendasi_perbaikan) || empty($status) || empty($jenis_layanan)) {
         $error = "All fields are required!";
     } else {
         // Insert the new statement into the database
-        $query = "INSERT INTO data_pernyataan (dimensi_layanan, pernyataan, rekomendasi_perbaikan, status) 
-                  VALUES (?, ?, ?, ?)";
+        $query = "INSERT INTO data_pernyataan (dimensi_layanan, pernyataan, rekomendasi_perbaikan, status, jenis_layanan) 
+                  VALUES (?, ?, ?, ?, ?)";
 
         if ($stmt = $db->prepare($query)) {
             // Bind parameters
-            $stmt->bind_param("ssss", $dimensi_layanan, $pernyataan, $rekomendasi_perbaikan, $status);
+            $stmt->bind_param("sssss", $dimensi_layanan, $pernyataan, $rekomendasi_perbaikan, $status, $jenis_layanan);
 
             // Execute the query
             if ($stmt->execute()) {
@@ -97,6 +101,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="jenis_layanan">Jenis Layanan:</label><br>
+                                    <?php
+                                    // Query to fetch available jenis_layanan from layanan table
+                                    $query_layanan = "SELECT jenis_layanan FROM layanan";
+                                    $result_layanan = $db->query($query_layanan);
+
+                                    // Loop through and generate checkboxes
+                                    while ($row_layanan = $result_layanan->fetch_assoc()) {
+                                        echo "<label><input type='checkbox' name='jenis_layanan[]' value='{$row_layanan['jenis_layanan']}'> {$row_layanan['jenis_layanan']}</label><br>";
+                                    }
+                                    ?>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="pernyataan">Pernyataan:</label>
                                     <textarea name="pernyataan" id="pernyataan" class="form-control" required></textarea>
                                 </div>
@@ -106,6 +124,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <textarea name="rekomendasi_perbaikan" id="rekomendasi_perbaikan" class="form-control" required></textarea>
                                 </div>
 
+                                <!-- Status field (Active/Inactive) -->
                                 <div class="form-group">
                                     <label for="status">Status:</label>
                                     <select name="status" id="status" class="form-control" required>
@@ -114,7 +133,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </select>
                                 </div>
 
+                                <!-- Submit Button -->
                                 <button type="submit" class="btn btn-primary">Tambah Pernyataan</button>
+                                
+                                <!-- Cancel Button (Batal) -->
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='data_pernyataan.php'">Batal</button>
                             </form>
                         </div>
                     </div>
@@ -125,6 +148,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div> <!-- End main -->
 </div> <!-- End app -->
 
-<script src="path/to/bootstrap.bundle.js"></script> <!-- Add your bootstrap js path here -->
+<?php require "layout/js.php"; ?>
 </body>
 </html>

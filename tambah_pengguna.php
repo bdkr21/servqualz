@@ -102,6 +102,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </select>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Tambah Pengguna</button>
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='owner_data_pengguna.php'">Batal</button>
                             </form>
                         </div>
                     </div>

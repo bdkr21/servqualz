@@ -181,6 +181,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     ?>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Tambah Transaksi</button>
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='data_transaksi.php'">Batal</button>
+                                
                             </form>
                         </div>
                     </div>

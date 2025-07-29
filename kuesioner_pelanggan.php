@@ -2,58 +2,95 @@
 // Ensure the database connection is available
 require __DIR__ . '/include/conn.php';
 
-// Get the id_transaksi from the URL
-if (isset($_GET['id_transaksi'])) {
-    $id_transaksi = $_GET['id_transaksi'];
+// Get the kode_transaksi from the URL
+if (isset($_GET['kode_transaksi'])) {
+    $kode_transaksi = $_GET['kode_transaksi'];
 
-    // Query to fetch only active statements (pernyataan) for the given transaction
-    $query_pernyataan = "SELECT * FROM data_pernyataan WHERE status = 'aktif'";
-    $result_pernyataan = $db->query($query_pernyataan);
+    // Query to fetch the kode_transaksi and related jenis_layanan
+    $query_transaksi = "SELECT t.kode_transaksi, t.pembayaran, p.nama, t.jenis_layanan 
+                        FROM transaksi t 
+                        INNER JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan 
+                        WHERE t.kode_transaksi = ?";
 
-    // Check if the form is submitted
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        // First, insert the kuesioner (questionnaire) into the `kuesioner` table
-        $id_data_kuesioner = 1; // Assuming you want to use a static kuesioner ID or fetch dynamically
-        $tgl_pengisian = date('Y-m-d H:i:s'); // Get the current timestamp
-        $id_pelanggan = $_GET['id_transaksi']; // Assuming you want to link to the current transaction
+    if ($stmt = $db->prepare($query_transaksi)) {
+        $stmt->bind_param("s", $kode_transaksi);  // Use "s" for string binding (kode_transaksi is a string)
+        $stmt->execute();
+        $result_transaksi = $stmt->get_result();
 
-        // Insert into `kuesioner` table
-        $query_insert_kuesioner = "INSERT INTO kuesioner (id_data_kuesioner, id_pelanggan, tgl_pengisian) 
-                                   VALUES (?, ?, ?)";
-        if ($stmt_insert_kuesioner = $db->prepare($query_insert_kuesioner)) {
-            $stmt_insert_kuesioner->bind_param("iis", $id_data_kuesioner, $id_pelanggan, $tgl_pengisian);
-            if ($stmt_insert_kuesioner->execute()) {
-                $id_kuesioner = $stmt_insert_kuesioner->insert_id; // Get the last inserted ID (kuesioner)
+        // Check if the transaction exists
+        if ($result_transaksi->num_rows > 0) {
+            $row_transaksi = $result_transaksi->fetch_assoc();
+            $pembayaran = $row_transaksi['pembayaran'];
+            $nama_pelanggan = $row_transaksi['nama'];
+            $jenis_layanan_transaksi = $row_transaksi['jenis_layanan'];  // Get jenis layanan from transaction
 
-                // Now, insert answers into the jawaban_kuesioner table
-                $query_insert_jawaban = "INSERT INTO jawaban_kuesioner (id_kuesioner, id_data_pernyataan, jawaban) 
-                                         VALUES (?, ?, ?)";
-                $error = false;
+            // Check if the transaction status is 'lunas'
+            if ($pembayaran == 'lunas') {
+                // Query to fetch the kuesioner where status is 'publish' and dimensi_layanan matches the transaction's services
+                $query_kuesioner = "SELECT id_data_kuesioner, nama_kuesioner, dimensi_layanan 
+                                    FROM data_kuesioner 
+                                    WHERE status = 'publish' 
+                                    AND FIND_IN_SET(?, dimensi_layanan)";
 
-                // Loop through all answers and insert them into the jawaban_kuesioner table
-                foreach ($_POST['jawaban'] as $id_data_pernyataan => $jawaban) {
-                    if ($stmt_insert_jawaban = $db->prepare($query_insert_jawaban)) {
-                        $stmt_insert_jawaban->bind_param("iis", $id_kuesioner, $id_data_pernyataan, $jawaban);
-                        if (!$stmt_insert_jawaban->execute()) {
-                            $error = true;
-                            break;
+                if ($stmt_kuesioner = $db->prepare($query_kuesioner)) {
+                    $stmt_kuesioner->bind_param("s", $jenis_layanan_transaksi);  // Use "s" for string binding
+                    $stmt_kuesioner->execute();
+                    $result_kuesioner = $stmt_kuesioner->get_result();
+
+                    // Check if there are any kuesioners
+                    if ($result_kuesioner->num_rows > 0) {
+                        // Loop through the kuesioners and display the active pernyataan for each
+                        while ($row_kuesioner = $result_kuesioner->fetch_assoc()) {
+                            $id_data_kuesioner = $row_kuesioner['id_data_kuesioner'];
+                            $nama_kuesioner = $row_kuesioner['nama_kuesioner'];
+                            $dimensi_layanan = $row_kuesioner['dimensi_layanan'];  // Get dimensi_layanan
+
+                            // Query to fetch active pernyataan for this kuesioner and matching dimensi_layanan
+                            $query_pernyataan = "SELECT p.pernyataan 
+                                                 FROM data_pernyataan p 
+                                                 WHERE p.id_data_kuesioner = ? 
+                                                 AND p.status = 'aktif' 
+                                                 AND FIND_IN_SET(?, p.jenis_layanan)";  // Find matching jenis_layanan
+
+                            if ($stmt_pernyataan = $db->prepare($query_pernyataan)) {
+                                $stmt_pernyataan->bind_param("ss", $id_data_kuesioner, $jenis_layanan_transaksi);  // Bind parameters
+                                $stmt_pernyataan->execute();
+                                $result_pernyataan = $stmt_pernyataan->get_result();
+
+                                // Check for query errors
+                                if (!$result_pernyataan) {
+                                    die('Query failed: ' . $db->error);
+                                }
+
+                                // Check if there are any active pernyataan
+                                if ($result_pernyataan->num_rows > 0) {
+                                    echo "<h5>$nama_kuesioner</h5>";
+                                    echo "<ul>";
+
+                                    while ($row_pernyataan = $result_pernyataan->fetch_assoc()) {
+                                        echo "<li>{$row_pernyataan['pernyataan']}</li>";
+                                    }
+
+                                    echo "</ul>";
+                                }
+                                $stmt_pernyataan->close();
+                            }
                         }
-                        $stmt_insert_jawaban->close();
                     }
-                }
-
-                // Check if there was an error in inserting the answers
-                if ($error) {
-                    $message = "There was an error while submitting your answers.";
-                } else {
-                    $message = "Your answers have been successfully submitted!";
+                    $stmt_kuesioner->close();
                 }
             } else {
-                $message = "Error: Could not insert kuesioner.";
+                $error = "Transaction not paid yet. You cannot fill the questionnaire.";
             }
-            $stmt_insert_kuesioner->close();
+        } else {
+            $error = "Invalid transaction code. Please check and try again.";
         }
+        $stmt->close();
     }
+} else {
+    // Redirect to a different page if no kode_transaksi is provided
+    header("Location: index_pelanggan.php");
+    exit();
 }
 ?>
 
@@ -63,71 +100,41 @@ if (isset($_GET['id_transaksi'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kuesioner Pelanggan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/bootstrap.css">
+    <link rel="stylesheet" href="assets/vendors/bootstrap-icons/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="shortcut icon" href="assets/images/favicon.png" type="image/x-icon">
 </head>
 <body>
+    <div id="app">
+        <div id="main">
+            <div class="page-heading">
+                <h3>Kuesioner Pelanggan</h3>
+            </div>
 
-<div id="app">
-    <div id="main">
-        <header class="mb-3">
-            <a href="#" class="burger-btn d-block d-xl-none">
-                <i class="bi bi-justify fs-3"></i>
-            </a>
-        </header>
-
-        <div class="page-heading">
-            <h3>Formulir Kuesioner Pelanggan</h3>
-        </div>
-
-        <div class="page-content">
-            <section class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h4>Isilah Kuesioner Berikut</h4>
-                        </div>
-                        <div class="card-body">
-                            <?php if (isset($message)): ?>
-                                <div class="alert alert-success"><?php echo $message; ?></div>
-                            <?php endif; ?>
-
-                            <form action="kuesioner_pelanggan.php?id_transaksi=<?php echo $id_transaksi; ?>" method="POST">
-                                <div class="form-group">
-                                    <h5>Pernyataan</h5>
-
-                                    <?php
-                                    // Check if the query is successful
-                                    if ($result_pernyataan->num_rows > 0) {
-                                        $row_number = 1;
-                                        while ($row = $result_pernyataan->fetch_assoc()) {
-                                            // Generate the statement and Likert scale options
-                                            echo "<div class='pernyataan'>
-                                                    <label><b>" . $row_number++ . ". " . $row['pernyataan'] . "</b></label><br>";
-                                            
-                                            // Generate Likert scale options (1 to 5)
-                                            echo "<input type='radio' name='jawaban[{$row['id_data_pernyataan']}]' value='1' required> 1 
-                                                  <input type='radio' name='jawaban[{$row['id_data_pernyataan']}]' value='2'> 2 
-                                                  <input type='radio' name='jawaban[{$row['id_data_pernyataan']}]' value='3'> 3 
-                                                  <input type='radio' name='jawaban[{$row['id_data_pernyataan']}]' value='4'> 4 
-                                                  <input type='radio' name='jawaban[{$row['id_data_pernyataan']}]' value='5'> 5
-                                                  <br><br>";
-                                        }
-                                    } else {
-                                        echo "Tidak ada pernyataan tersedia untuk diisi.";
-                                    }
-                                    ?>
-                                </div>
-
-                                <button type="submit" class="btn btn-primary">Kirim Kuesioner</button>
-                            </form>
+            <div class="page-content">
+                <section class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4>Formulir Kuesioner</h4>
+                            </div>
+                            <div class="card-body">
+                                <?php
+                                if (isset($error)) {
+                                    echo "<div class='alert alert-danger'>{$error}</div>";
+                                }
+                                ?>
+                                <!-- Loop through the active pernyataan and display them here -->
+                            </div>
                         </div>
                     </div>
-                </div>
-            </section>
-        </div> <!-- End page-content -->
+                </section>
+            </div> <!-- End page-content -->
+        </div> <!-- End main -->
+    </div> <!-- End app -->
 
-    </div> <!-- End main -->
-</div> <!-- End app -->
-
-<?php require "layout/js.php"; ?>
+    <script src="path/to/bootstrap.bundle.js"></script> <!-- Add your bootstrap js path here -->
 </body>
 </html>

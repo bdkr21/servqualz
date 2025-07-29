@@ -162,6 +162,7 @@ if (isset($_GET['id'])) {
                                     ?>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Update Transaksi</button>
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='data_transaksi.php'">Batal</button>
                             </form>
                         </div>
                     </div>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 29, 2025 at 07:00 PM
+-- Generation Time: Jul 29, 2025 at 05:18 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -31,17 +31,21 @@ CREATE TABLE `data_kuesioner` (
   `id_data_kuesioner` int(11) NOT NULL,
   `nama_kuesioner` varchar(255) NOT NULL,
   `dimensi_layanan` varchar(255) NOT NULL,
-  `status` enum('aktif','tidak aktif') NOT NULL
+  `status` enum('publish','tidak publish','selesai') NOT NULL,
+  `jenis_layanan` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `data_kuesioner`
 --
 
-INSERT INTO `data_kuesioner` (`id_data_kuesioner`, `nama_kuesioner`, `dimensi_layanan`, `status`) VALUES
-(1, 'Kuesioner Reliability', 'reliabillity', 'aktif'),
-(3, 'Kuesioner Tangibels', 'tangibels', 'aktif'),
-(4, 'test responsiveness', 'responsiveness', 'aktif');
+INSERT INTO `data_kuesioner` (`id_data_kuesioner`, `nama_kuesioner`, `dimensi_layanan`, `status`, `jenis_layanan`) VALUES
+(6, 'Kuesioner ganteng', 'assurance,reliabillity', 'tidak publish', NULL),
+(7, 'Kuesioner Cantik', 'responsiveness', 'publish', NULL),
+(8, 'Kuesioner Rupa', 'tangibels', 'publish', NULL),
+(9, 'Kuesioner Sanyo', 'assurance', 'publish', NULL),
+(10, 'Kuesioner Bendera', 'empathy', 'publish', NULL),
+(11, 'Kuesioner China', 'tangibels', 'publish', 'Haircut & Styling');
 
 -- --------------------------------------------------------
 
@@ -54,18 +58,20 @@ CREATE TABLE `data_pernyataan` (
   `dimensi_layanan` enum('reliability','assurance','tangibels','empathy','responsiveness') NOT NULL,
   `pernyataan` varchar(255) NOT NULL,
   `rekomendasi_perbaikan` varchar(255) NOT NULL,
-  `status` enum('Aktif','Tidak Aktif') NOT NULL
+  `status` enum('Aktif','Tidak Aktif') NOT NULL,
+  `jenis_layanan` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `data_pernyataan`
 --
 
-INSERT INTO `data_pernyataan` (`id_data_pernyataan`, `dimensi_layanan`, `pernyataan`, `rekomendasi_perbaikan`, `status`) VALUES
-(1, 'reliability', 'Stylist mampu menggunakan alat dengan baik pada saat melayani', 'Lakukan audit peralatan dan perawatan rutin setiap bulan.', 'Aktif'),
-(2, 'reliability', 'Staf mampu menyampaikan informasi dengan jelas', 'Adakan pelatihan teknis bagi stylist setiap 3 bulan.', 'Aktif'),
-(4, 'responsiveness', 'aku jelek', 'jadi ganteng', 'Aktif'),
-(5, 'assurance', 'xcvxcv', 'xcvxcvxcv', 'Tidak Aktif');
+INSERT INTO `data_pernyataan` (`id_data_pernyataan`, `dimensi_layanan`, `pernyataan`, `rekomendasi_perbaikan`, `status`, `jenis_layanan`) VALUES
+(1, 'reliability', 'Stylist mampu menggunakan alat dengan baik pada saat melayani', 'Lakukan audit peralatan dan perawatan rutin setiap bulan.', 'Aktif', NULL),
+(2, 'reliability', 'Staf mampu menyampaikan informasi dengan jelas', 'Adakan pelatihan teknis bagi stylist setiap 3 bulan.', 'Aktif', NULL),
+(4, 'responsiveness', 'aku jelek', 'jadi ganteng', 'Aktif', NULL),
+(5, 'assurance', 'xcvxcv', 'xcvxcvxcv', 'Tidak Aktif', NULL),
+(6, 'tangibels', 'Peralatan salon dalam kondisi baik dan digunakan dengan\r\nbenar oleh stylist', 'Lakukan pemeriksaan rutin pada peralatan dan berikan pelatihan\r\npenggunaan alat yang benar', 'Aktif', 'Haircut & Styling');
 
 -- --------------------------------------------------------
 
@@ -157,9 +163,17 @@ CREATE TABLE `pelanggan` (
 --
 
 INSERT INTO `pelanggan` (`id_pelanggan`, `nama`, `no_telp`, `tanggal_lahir`, `jenis_layanan`) VALUES
-(1, 'xcvxcv', '081322900800', '2023-06-06', 'haircut'),
-(2, 'zeva', '081322800799', '2025-06-01', 'Layanan A'),
-(3, 'rudi', '082133322111', '2025-06-07', '');
+(13, 'fazrin', '081322900800', '2001-07-03', 'Haircut & Styling,Massage & Stap,Hair Coloring,Nail care & Beauty'),
+(14, 'sdfsdfsdf', '345345345', '2025-07-08', 'Haircut & Styling,Nail care & Beauty,Hair Treament'),
+(15, 'fghfghf', '5345345345', '2025-07-01', 'Nail care & Beauty'),
+(16, 'cvbcvb', '534534535', '2025-07-07', 'Hair Coloring,Eyelashes & Brow Styling,Hair Treament'),
+(17, 'mnghjghj', '54363546346', '2025-07-10', 'Haircut & Styling,Massage & Stap,Hair Coloring,Nail care & Beauty'),
+(18, 'fgfgfghfgretrt', '35345123324', '2025-07-21', 'Massage & Stap,Hair Coloring,Nail care & Beauty,Hairdo & Blow Styling,Eyelashes & Brow Styling,Hair Treament'),
+(19, '3acvbcvbsdfsd', '34534534234234', '2023-07-06', 'Haircut & Styling'),
+(20, 'a', '0323232323232', '2025-01-28', 'Massage & Stap'),
+(21, 'nhnhnhnhnhn', '543534534543', '2025-04-23', 'Hairdo & Blow Styling'),
+(22, 'ccvbcvb', '356456456456', '2025-06-25', 'Hair Treament'),
+(23, 'dfgdfgdfg', '23424522221', '2025-05-31', 'Eyelashes & Brow Styling');
 
 -- --------------------------------------------------------
 
@@ -181,7 +195,8 @@ CREATE TABLE `pengguna` (
 
 INSERT INTO `pengguna` (`id_pengguna`, `name`, `roles_id`, `username`, `password`) VALUES
 (8, 'caca', 1, 'caca', '$2y$10$kKYPtwD0KpQv9xXwGiXkPeNJP15J96MEsU1YHwLKJ5juUF5y35pz2'),
-(9, 'Maharani', 1, 'admin', '$2y$10$JXiedyoKsvwUdd4XzjeHMe0it9Un3B/flsAHhzChAE1R.EySsvzXK');
+(9, 'Maharani', 1, 'admin', '$2y$10$JXiedyoKsvwUdd4XzjeHMe0it9Un3B/flsAHhzChAE1R.EySsvzXK'),
+(11, 'caca', 2, 'caca', '$2y$10$ZE.aic0ndtY4i15XAGdsu.WrG6annzm/9fJaDnKovyS6AVQQ6jvG.');
 
 -- --------------------------------------------------------
 
@@ -235,18 +250,26 @@ CREATE TABLE `transaksi` (
   `id_pelanggan` int(11) NOT NULL,
   `tanggal_transaksi` date NOT NULL,
   `pembayaran` enum('lunas','belum lunas') NOT NULL,
-  `jenis_layanan` varchar(255) NOT NULL
+  `jenis_layanan` varchar(255) NOT NULL,
+  `kode_transaksi` varchar(12) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `transaksi`
 --
 
-INSERT INTO `transaksi` (`id_transaksi`, `id_pelanggan`, `tanggal_transaksi`, `pembayaran`, `jenis_layanan`) VALUES
-(3, 1, '2025-06-02', 'belum lunas', 'Service B,Service C'),
-(4, 1, '2025-07-12', 'lunas', 'Haircut & Styling,Massage & Stap,Hairdo & Blow Styling,Eyelashes & Brow Styling'),
-(5, 2, '2025-07-12', 'lunas', 'Massage & Stap,Nail care & Beauty,Hairdo & Blow Styling,Eyelashes & Brow Styling'),
-(6, 3, '2025-06-29', 'belum lunas', 'Massage & Stap,Nail care & Beauty,Hairdo & Blow Styling');
+INSERT INTO `transaksi` (`id_transaksi`, `id_pelanggan`, `tanggal_transaksi`, `pembayaran`, `jenis_layanan`, `kode_transaksi`) VALUES
+(16, 13, '2025-07-29', 'lunas', 'Haircut & Styling', 'TR001'),
+(17, 14, '2025-07-29', 'lunas', 'Haircut & Styling,Nail care & Beauty,Hair Treament', 'TR002'),
+(18, 15, '2025-07-29', 'lunas', 'Nail care & Beauty', 'TR003'),
+(19, 16, '2025-07-29', 'lunas', 'Hair Coloring,Eyelashes & Brow Styling,Hair Treament', 'TR004'),
+(20, 17, '2025-07-29', 'lunas', 'Haircut & Styling,Massage & Stap,Hair Coloring,Nail care & Beauty', 'TR005'),
+(21, 18, '2025-07-29', 'belum lunas', 'Massage & Stap,Hair Coloring,Nail care & Beauty,Hairdo & Blow Styling,Eyelashes & Brow Styling,Hair Treament', 'TR006'),
+(22, 19, '2025-07-29', 'lunas', 'Haircut & Styling', 'TR007'),
+(23, 20, '2025-07-29', 'lunas', 'Massage & Stap', 'TR008'),
+(24, 21, '2025-07-29', 'lunas', 'Hairdo & Blow Styling', 'TR009'),
+(25, 22, '2025-07-29', 'lunas', 'Hair Treament', 'TR010'),
+(26, 23, '2025-07-29', 'lunas', 'Eyelashes & Brow Styling', 'TR011');
 
 --
 -- Indexes for dumped tables
@@ -321,13 +344,13 @@ ALTER TABLE `transaksi`
 -- AUTO_INCREMENT for table `data_kuesioner`
 --
 ALTER TABLE `data_kuesioner`
-  MODIFY `id_data_kuesioner` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_data_kuesioner` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `data_pernyataan`
 --
 ALTER TABLE `data_pernyataan`
-  MODIFY `id_data_pernyataan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_data_pernyataan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `keluhan`
@@ -345,13 +368,13 @@ ALTER TABLE `layanan`
 -- AUTO_INCREMENT for table `pelanggan`
 --
 ALTER TABLE `pelanggan`
-  MODIFY `id_pelanggan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_pelanggan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `pengguna`
 --
 ALTER TABLE `pengguna`
-  MODIFY `id_pengguna` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_pengguna` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `servqual`
@@ -369,7 +392,7 @@ ALTER TABLE `servqual_roles`
 -- AUTO_INCREMENT for table `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `id_transaksi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_transaksi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

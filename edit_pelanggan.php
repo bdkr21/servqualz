@@ -100,6 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">Update Pelanggan</button>
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='data_pelanggan.php'">Batal</button>
                             </form>
                         </div>
                     </div>
