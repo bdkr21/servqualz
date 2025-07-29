@@ -74,9 +74,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     // Execute the transaction insertion
                     if ($stmt_transaksi->execute()) {
-                        // Success: Redirect to the transaksi data page
-                        header("Location: data_transaksi.php");
-                        exit();
+                        // Send WhatsApp message using Whapify API
+                        $whatsapp_api_url = "https://whapify.id/api/send/whatsapp";
+                        $whatsapp_data = [
+                            "secret" => "daf42e9b8914337a175eb2419e560f4a3d74a131", // Replace with your API secret
+                            "account" => "1753812583fa83a11a198d5a7f0bf77a1987bcd00668890e679d008", // Replace with your unique account ID
+                            "recipient" => $no_telp, // Customer phone number
+                            "type" => "text",
+                            "message" => "Terima kasih telah melakukan transaksi di HETTIE PROFESSIONAL HAIRSTYLIST! Kode transaksi Anda adalah: " . $kode_transaksi . ".\n\n" .
+                            "Kode transaksi ini dapat digunakan untuk mengisi **kuesioner** dan memberikan **keluhan** melalui website kami. " .
+                            "Silakan gunakan kode transaksi ini pada halaman yang sesuai untuk memberikan masukan dan feedback tentang layanan kami.\n\n" .
+                            "Kami menghargai partisipasi Anda dalam membantu kami meningkatkan kualitas layanan kami.\n\n" .
+                            "Jika ada pertanyaan, jangan ragu untuk menghubungi kami."
+                        ];
+
+                        // Initialize cURL session to send the message
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $whatsapp_api_url);
+                        curl_setopt($ch, CURLOPT_POST, true);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, $whatsapp_data);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                        // Execute the cURL request
+                        $response = curl_exec($ch);
+                        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+                        // Handle the response
+                        if ($http_code === 200) {
+                            // Success: Redirect to the transaksi data page
+                            header("Location: data_transaksi.php");
+                            exit();
+                        } else {
+                            echo "Error sending WhatsApp message: HTTP Code " . $http_code . ", Response: " . $response;
+                        }
+
+                        // Close cURL session
+                        curl_close($ch);
                     } else {
                         // Error: Could not insert transaction data
                         $error = "Error: Could not insert transaction data.";
@@ -106,6 +139,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tambah Transaksi</title>
+    <script>
+        // Function to format the phone number input as 0812-345-678
+        function formatPhoneNumber(input) {
+            // Remove non-numeric characters
+            let value = input.value.replace(/\D/g, '');
+
+            // Format phone number as 0812-345-678
+            if (value.length > 4) {
+                value = value.replace(/(\d{4})(\d{3})(\d{3})/, '$1-$2-$3');
+            } else if (value.length > 3) {
+                value = value.replace(/(\d{4})(\d{3})/, '$1-$2');
+            }
+
+            // Set the formatted value back to the input field
+            input.value = value;
+        }
+    </script>
 </head>
 <body>
 
@@ -144,16 +194,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                 <div class="form-group">
                                     <label for="no_telp">No Telepon:</label>
-                                    <input type="text" name="no_telp" id="no_telp" class="form-control" required>
+                                    <input type="text" name="no_telp" id="no_telp" class="form-control" oninput="formatPhoneNumber(this)" required>
                                 </div>
 
-                                <!-- Date Picker for Tanggal Lahir -->
                                 <div class="form-group">
                                     <label for="tanggal_lahir">Tanggal Lahir:</label>
                                     <input type="text" name="tanggal_lahir" id="tanggal_lahir" class="form-control" required>
                                 </div>
 
-                                <!-- Date Picker for Tanggal Transaksi (Default to Today) -->
                                 <div class="form-group">
                                     <label for="tanggal_transaksi">Tanggal Transaksi:</label>
                                     <input type="text" name="tanggal_transaksi" id="tanggal_transaksi" class="form-control" required>
@@ -180,9 +228,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     }
                                     ?>
                                 </div>
+
                                 <button type="submit" class="btn btn-primary">Tambah Transaksi</button>
                                 <button type="button" class="btn btn-secondary" onclick="window.location.href='data_transaksi.php'">Batal</button>
-                                
                             </form>
                         </div>
                     </div>

@@ -3,6 +3,7 @@
 require __DIR__ . '/include/conn.php';
 require __DIR__ . '/include/session_check.php';
 require "layout/head.php";
+
 // Get the ID of the statement to edit
 if (isset($_GET['id'])) {
     $id_data_pernyataan = $_GET['id'];
@@ -81,7 +82,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <form action="edit_pernyataan.php?id=<?php echo $id_data_pernyataan; ?>" method="POST">
                                 <div class="form-group">
                                     <label for="dimensi_layanan">Dimensi Layanan:</label>
-                                    <input type="text" name="dimensi_layanan" id="dimensi_layanan" class="form-control" value="<?php echo $pernyataan['dimensi_layanan']; ?>" required>
+                                    <select name="dimensi_layanan" id="dimensi_layanan" class="form-control" required>
+                                        <option value="">Select Dimensi Layanan</option>
+                                        <?php
+                                        // Query to fetch available dimensi_layanan from servqual table
+                                        $query_servqual = "SELECT dimensi_layanan FROM servqual";
+                                        $result_servqual = $db->query($query_servqual);
+
+                                        // Loop through and generate options
+                                        while ($row_servqual = $result_servqual->fetch_assoc()) {
+                                            // Check if the option is the current value from the database
+                                            $selected = ($row_servqual['dimensi_layanan'] == $pernyataan['dimensi_layanan']) ? 'selected' : '';
+                                            echo "<option value='{$row_servqual['dimensi_layanan']}' $selected>{$row_servqual['dimensi_layanan']}</option>";
+                                        }
+                                        ?>
+                                    </select>
                                 </div>
 
                                 <div class="form-group">
@@ -103,6 +118,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">Update Pernyataan</button>
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='data_pernyataan.php'">Batal</button>
                             </form>
                         </div>
                     </div>
