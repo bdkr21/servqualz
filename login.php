@@ -33,6 +33,9 @@
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block btn-lg shadow-lg mt-4" style="border-radius: 30px;">Log in</button>
+                        <button class="btn btn-warning btn-block btn-lg shadow-lg mt-4">
+                            <a href="index_pelanggan.php">Kuesioner pelanggan</a>
+                        </button>
                     </form>
                 </div>
             </div>
