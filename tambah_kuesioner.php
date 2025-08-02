@@ -8,23 +8,22 @@ require "layout/head.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get the data from the form
     $nama_kuesioner = $_POST['nama_kuesioner'];
-    $dimensi_layanan = isset($_POST['dimensi_layanan']) ? implode(',', $_POST['dimensi_layanan']) : '';  // Handle multiple checkboxes
     $status = $_POST['status']; // The status (whether the kuesioner is active or not)
     
-    // Handle multiple jenis_layanan selections
+    // Handle the selected jenis_layanan
     $jenis_layanan = isset($_POST['jenis_layanan']) ? implode(',', $_POST['jenis_layanan']) : '';  // Store the selected services as a comma-separated string
 
     // Validate inputs
-    if (empty($nama_kuesioner) || empty($dimensi_layanan) || empty($status) || empty($jenis_layanan)) {
+    if (empty($nama_kuesioner) || empty($status) || empty($jenis_layanan)) {
         $error = "All fields are required!";
     } else {
         // Insert the new kuesioner into the database
-        $query = "INSERT INTO data_kuesioner (nama_kuesioner, dimensi_layanan, status, jenis_layanan) 
-                  VALUES (?, ?, ?, ?)";
+        $query = "INSERT INTO data_kuesioner (nama_kuesioner, status, jenis_layanan) 
+                  VALUES (?, ?, ?)";
 
         if ($stmt = $db->prepare($query)) {
             // Bind parameters
-            $stmt->bind_param("ssss", $nama_kuesioner, $dimensi_layanan, $status, $jenis_layanan);
+            $stmt->bind_param("sss", $nama_kuesioner, $status, $jenis_layanan);
 
             // Execute the query
             if ($stmt->execute()) {
@@ -44,6 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -88,20 +88,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="dimensi_layanan">Dimensi Layanan:</label><br>
-                                    <?php
-                                    // Query to fetch dimensi_layanan from servqual table
-                                    $query_servqual = "SELECT dimensi_layanan FROM servqual";
-                                    $result_servqual = $db->query($query_servqual);
-
-                                    // Loop through and generate checkboxes for multiple dimensions
-                                    while ($row_servqual = $result_servqual->fetch_assoc()) {
-                                        echo "<label><input type='checkbox' name='dimensi_layanan[]' value='{$row_servqual['dimensi_layanan']}'> {$row_servqual['dimensi_layanan']}</label><br>";
-                                    }
-                                    ?>
-                                </div>
-
-                                <div class="form-group">
                                     <label for="jenis_layanan">Jenis Layanan:</label><br>
                                     <?php
                                     // Query to fetch available jenis_layanan from layanan table
@@ -118,9 +104,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="form-group">
                                     <label for="status">Status:</label>
                                     <select name="status" id="status" class="form-control" required>
-                                        <option value="publish" <?php echo (isset($status) && $status == 'publish') ? 'selected' : ''; ?>>Publish</option>
-                                        <option value="tidak publish" <?php echo (isset($status) && $status == 'tidak publish') ? 'selected' : ''; ?>>Tidak Publish</option>
-                                        <option value="selesai" <?php echo (isset($status) && $status == 'selesai') ? 'selected' : ''; ?>>Selesai</option>
+                                        <option value="tidak publish" selected>Tidak Publish</option>
+                                        <option value="publish">Publish</option>
+                                        <option value="selesai">Selesai</option>
                                     </select>
                                 </div>
 

@@ -19,29 +19,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($dimensi_layanan) || empty($pernyataan) || empty($rekomendasi_perbaikan) || empty($status) || empty($jenis_layanan)) {
         $error = "All fields are required!";
     } else {
-        // Insert the new statement into the database
-        $query = "INSERT INTO data_pernyataan (dimensi_layanan, pernyataan, rekomendasi_perbaikan, status, jenis_layanan) 
-                  VALUES (?, ?, ?, ?, ?)";
-
-        if ($stmt = $db->prepare($query)) {
-            // Bind parameters
-            $stmt->bind_param("sssss", $dimensi_layanan, $pernyataan, $rekomendasi_perbaikan, $status, $jenis_layanan);
-
-            // Execute the query
-            if ($stmt->execute()) {
-                // Success: Redirect to the list page
-                header("Location: data_pernyataan.php");
-                exit();
-            } else {
-                // Error: Query failed
-                $error = "Error: Could not execute the query.";
-            }
-
-            // Close the statement
-            $stmt->close();
+        // Check if dimensi_layanan is a valid value in ENUM
+        $valid_dimensi_layanan = ['reliability', 'assurance', 'tangibles', 'empathy', 'responsiveness'];
+        if (!in_array($dimensi_layanan, $valid_dimensi_layanan)) {
+            $error = "Invalid Dimensi Layanan value!";
         } else {
-            // Error: Query preparation failed
-            $error = "Error: Could not prepare the query.";
+            // Insert the new statement into the database
+            $query = "INSERT INTO data_pernyataan (dimensi_layanan, pernyataan, rekomendasi_perbaikan, status, jenis_layanan) 
+                      VALUES (?, ?, ?, ?, ?)";
+
+            if ($stmt = $db->prepare($query)) {
+                // Bind parameters
+                $stmt->bind_param("sssss", $dimensi_layanan, $pernyataan, $rekomendasi_perbaikan, $status, $jenis_layanan);
+
+                // Execute the query
+                if ($stmt->execute()) {
+                    // Success: Redirect to the list page
+                    header("Location: data_pernyataan.php");
+                    exit();
+                } else {
+                    // Error: Query failed
+                    $error = "Error: Could not execute the query. " . $stmt->error;  // Add detailed error message
+                    echo $error;  // Print error for debugging
+                }
+
+                // Close the statement
+                $stmt->close();
+            } else {
+                // Error: Query preparation failed
+                $error = "Error: Could not prepare the query. " . $db->error;
+                echo $error;  // Print error for debugging
+            }
         }
     }
 }

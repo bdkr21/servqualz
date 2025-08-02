@@ -37,3 +37,56 @@
         });
     });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const jenisLayananSelect = document.getElementById('jenis_layanan');
+    
+    if (jenisLayananSelect) {
+        jenisLayananSelect.addEventListener('change', function() {
+            const selectedJenisLayanan = this.value;
+            
+            if (selectedJenisLayanan) {
+                fetchPernyataanData(selectedJenisLayanan);
+            } else {
+                // Clear the table if no jenis layanan is selected
+                const tbody = document.querySelector('#tablePernyataan tbody');
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Pilih jenis layanan untuk melihat pernyataan</td></tr>';
+            }
+        });
+    }
+    
+    function fetchPernyataanData(jenisLayanan) {
+        fetch(`edit_kuesioner.php?ajax=get_pernyataan&jenis_layanan=${encodeURIComponent(jenisLayanan)}`)
+            .then(response => response.json())
+            .then(data => {
+                updatePernyataanTable(data);
+            })
+            .catch(error => {
+                console.error('Error fetching pernyataan data:', error);
+            });
+    }
+    
+    function updatePernyataanTable(data) {
+        const tbody = document.querySelector('#tablePernyataan tbody');
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Tidak ada pernyataan untuk jenis layanan ini</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        data.forEach(item => {
+            html += `
+                <tr>
+                    <td>${item.id_data_pernyataan}</td>
+                    <td>${item.dimensi_layanan}</td>
+                    <td>${item.pernyataan}</td>
+                    <td>${item.rekomendasi_perbaikan}</td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+});
+</script>
