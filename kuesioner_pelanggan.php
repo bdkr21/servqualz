@@ -57,8 +57,8 @@ if (isset($_GET['kode_transaksi'])) {
         $page  = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $start = ($page - 1) * $itemsPerPage;
 
-        // Fetch the pernyataan
-        $query_pernyataan = "
+        // Fetch the pernyataan for "Kenyataan" and "Harapan"
+        $query_pernyataan_kenyataan = "
           SELECT p.pernyataan
           FROM data_pernyataan p
           JOIN data_kuesioner k ON FIND_IN_SET(p.jenis_layanan, k.jenis_layanan)
@@ -66,44 +66,85 @@ if (isset($_GET['kode_transaksi'])) {
             AND k.status='publish'
             AND FIND_IN_SET(?, p.jenis_layanan)
           LIMIT ?, ?";
-        
-        if ($stmt_pernyataan = $db->prepare($query_pernyataan)) {
-            $stmt_pernyataan->bind_param("sii", $selected_service, $start, $itemsPerPage);
-            $stmt_pernyataan->execute();
-            $result_pernyataan = $stmt_pernyataan->get_result();
 
-            // Fetching active kuesioner to display inside the card
-            if ($result_pernyataan->num_rows) {
-                $active_kuesioner = [];
-                while ($r = $result_pernyataan->fetch_assoc()) {
-                    $active_kuesioner[] = $r['pernyataan'];
+        $query_pernyataan_harapan = "
+          SELECT p.pernyataan
+          FROM data_pernyataan p
+          JOIN data_kuesioner k ON FIND_IN_SET(p.jenis_layanan, k.jenis_layanan)
+          WHERE p.status='aktif'
+            AND k.status='publish'
+            AND FIND_IN_SET(?, p.jenis_layanan)
+          LIMIT ?, ?";
+
+        // Execute both queries
+        if ($stmt_pernyataan_kenyataan = $db->prepare($query_pernyataan_kenyataan)) {
+            $stmt_pernyataan_kenyataan->bind_param("sii", $selected_service, $start, $itemsPerPage);
+            $stmt_pernyataan_kenyataan->execute();
+            $result_pernyataan_kenyataan = $stmt_pernyataan_kenyataan->get_result();
+
+            if ($result_pernyataan_kenyataan->num_rows) {
+                $active_kuesioner_kenyataan = [];
+                while ($r = $result_pernyataan_kenyataan->fetch_assoc()) {
+                    $active_kuesioner_kenyataan[] = $r['pernyataan'];
                 }
             } else {
-                $error = "No active pernyataan found for this transaction.";
+                $error = "No active pernyataan found for 'Kenyataan'.";
             }
-            $stmt_pernyataan->close();
+            $stmt_pernyataan_kenyataan->close();
+        }
 
-            // Total count for pagination
-            $query_total = "
-              SELECT COUNT(*) as total
-              FROM data_pernyataan p
-              JOIN data_kuesioner k ON FIND_IN_SET(p.jenis_layanan, k.jenis_layanan)
-              WHERE p.status='aktif'
-                AND k.status='publish'
-                AND FIND_IN_SET(?, p.jenis_layanan)";
-            if ($stmt_total = $db->prepare($query_total)) {
-                $stmt_total->bind_param("s", $selected_service);
-                $stmt_total->execute();
-                $totalRows = $stmt_total->get_result()->fetch_assoc()['total'];
-                $totalPages = ceil($totalRows / $itemsPerPage);
-                $stmt_total->close();
+        if ($stmt_pernyataan_harapan = $db->prepare($query_pernyataan_harapan)) {
+            $stmt_pernyataan_harapan->bind_param("sii", $selected_service, $start, $itemsPerPage);
+            $stmt_pernyataan_harapan->execute();
+            $result_pernyataan_harapan = $stmt_pernyataan_harapan->get_result();
+
+            if ($result_pernyataan_harapan->num_rows) {
+                $active_kuesioner_harapan = [];
+                while ($r = $result_pernyataan_harapan->fetch_assoc()) {
+                    $active_kuesioner_harapan[] = $r['pernyataan'];
+                }
+            } else {
+                $error = "No active pernyataan found for 'Harapan'.";
             }
+            $stmt_pernyataan_harapan->close();
         }
     }
 } else {
     header("Location: index_pelanggan.php");
     exit();
 }
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['jawab_kenyataan']) && isset($_POST['jawab_harapan'])) {
+    // Store the current date in a variable
+    $tgl_pengisian = date('Y-m-d');
+
+    // Loop through each pernyataan
+    foreach ($_POST['jawab_kenyataan'] as $index => $jawaban_kenyataan) {
+        $jawaban_harapan = $_POST['jawab_harapan'][$index];
+        
+        // Calculate the gap (difference between Kenyataan and Harapan)
+        $gap = $jawaban_kenyataan - $jawaban_harapan;
+
+        // Insert the answers into the kuesioner table
+        $query_insert = "
+            INSERT INTO kuesioner (id_data_kuesioner, id_pelanggan, tgl_pengisian)
+            VALUES (?, ?, ?)
+        ";
+        $stmt_insert = $db->prepare($query_insert);
+        $stmt_insert->bind_param("iis", $selected_service, $kode_transaksi, $tgl_pengisian);
+        $stmt_insert->execute();
+
+        if ($stmt_insert->affected_rows > 0) {
+            $success_message = "Data successfully saved!";
+        } else {
+            $error = "Failed to save data.";
+        }
+
+        $stmt_insert->close();
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -115,7 +156,7 @@ if (isset($_GET['kode_transaksi'])) {
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/bootstrap.css">
   <style>
-    .container { max-width: 900px; margin-top: 50px; }
+    .container { max-width: 1250px; margin-top: 50px; }
     .card { margin-bottom:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
     .card-header { background:#f7f7f7; padding:20px; text-align:center; font-size:24px; }
     .card-body { padding:25px; }
@@ -126,6 +167,8 @@ if (isset($_GET['kode_transaksi'])) {
     .pagination { text-align:center; margin-top:20px; }
     .pagination a { padding:8px 12px; margin:0 5px; border:1px solid #ddd; border-radius:5px; text-decoration:none; color:#007bff;}
     .pagination a:hover { background:#007bff; color:#fff; }
+    .columns { display: flex; justify-content: space-between; }
+    .column { width: 48%; }
   </style>
 </head>
 <body>
@@ -139,6 +182,9 @@ if (isset($_GET['kode_transaksi'])) {
         <?php if (isset($error)): ?>
           <div class="alert alert-danger"><?= $error ?></div>
         <?php endif; ?>
+        <?php if (isset($success_message)): ?>
+          <div class="alert alert-success"><?= $success_message ?></div>
+        <?php endif; ?>
 
         <!-- Display the services buttons -->
         <div class="btn-group mb-4">
@@ -149,31 +195,51 @@ if (isset($_GET['kode_transaksi'])) {
           <?php endforeach; ?>
         </div>
 
-        <!-- Display the active kuesioner if available -->
-        <?php if (isset($active_kuesioner) && count($active_kuesioner) > 0): ?>
+        <!-- Display the active kuesioner for Kenyataan and Harapan -->
+        <?php if (isset($active_kuesioner_kenyataan) && count($active_kuesioner_kenyataan) > 0 && isset($active_kuesioner_harapan) && count($active_kuesioner_harapan) > 0): ?>
           <form method="POST">
-            <div class="active-kuesioner">
-              <?php foreach ($active_kuesioner as $i => $stmtText): ?>
-                <div class="mb-4">
-                  <label class="d-block font-weight-bold"><?= htmlspecialchars($stmtText) ?></label>
-                  <?php foreach ([1=>'Tidak Puas',2=>'Kurang Puas',3=>'Cukup Puas',4=>'Puas',5=>'Sangat Puas'] as $val => $lab): ?>
-                    <div class="radio-inline">
-                      <input type="radio" name="jawab[<?= $i ?>]" value="<?= $val ?>" required>
-                      <label><?= $lab ?></label>
-                    </div>
-                  <?php endforeach ?>
-                </div>
-              <?php endforeach ?>
+            <div class="columns">
+              <!-- Kenyataan section -->
+              <div class="column">
+                <h5>Kuesioner Kenyataan</h5>
+                <?php foreach ($active_kuesioner_kenyataan as $i => $stmtText): ?>
+                  <div class="mb-4">
+                    <label class="d-block font-weight-bold"><?= htmlspecialchars($stmtText) ?></label>
+                    <?php foreach ([1=>'Tidak Puas',2=>'Kurang Puas',3=>'Cukup Puas',4=>'Puas',5=>'Sangat Puas'] as $val => $lab): ?>
+                      <div class="radio-inline">
+                        <input type="radio" name="jawab_kenyataan[<?= $i ?>]" value="<?= $val ?>" required>
+                        <label><?= $lab ?></label>
+                      </div>
+                    <?php endforeach ?>
+                  </div>
+                <?php endforeach ?>
+              </div>
+
+              <!-- Harapan section -->
+              <div class="column">
+                <h5>Kuesioner Harapan</h5>
+                <?php foreach ($active_kuesioner_harapan as $i => $stmtText): ?>
+                  <div class="mb-4">
+                    <label class="d-block font-weight-bold"><?= htmlspecialchars($stmtText) ?></label>
+                    <?php foreach ([1=>'Tidak Puas',2=>'Kurang Puas',3=>'Cukup Puas',4=>'Puas',5=>'Sangat Puas'] as $val => $lab): ?>
+                      <div class="radio-inline">
+                        <input type="radio" name="jawab_harapan[<?= $i ?>]" value="<?= $val ?>" required>
+                        <label><?= $lab ?></label>
+                      </div>
+                    <?php endforeach ?>
+                  </div>
+                <?php endforeach ?>
+              </div>
             </div>
             <button type="submit" class="btn btn-primary">Kirim Kuesioner</button>
           </form>
 
           <!-- Pagination controls -->
-          <nav class="pagination">
+          <!-- <nav class="pagination">
             <?php for ($p = 1; $p <= $totalPages; $p++): ?>
               <a href="?kode_transaksi=<?= urlencode($kode_transaksi) ?>&service=<?= urlencode($selected_service) ?>&page=<?= $p ?>"><?= $p ?></a>
             <?php endfor ?>
-          </nav>
+          </nav> -->
         <?php else: ?>
           <p>No active kuesioner found for this service.</p>
         <?php endif ?>
