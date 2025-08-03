@@ -14,8 +14,20 @@ if (isset($_GET['id'])) {
         
         // Execute the query
         if ($stmt_delete->execute()) {
-            // Respond with a success message
-            echo json_encode(['success' => true]);
+            // Check where the delete request came from and redirect accordingly
+            $referer = $_SERVER['HTTP_REFERER'];
+
+            if (strpos($referer, 'data_pernyataan.php') !== false) {
+                // Redirect back to data_pernyataan.php
+                header("Location: data_pernyataan.php");
+            } elseif (strpos($referer, 'edit_kuesioner.php') !== false) {
+                // Redirect back to edit_kuesioner.php
+                echo json_encode(['success' => true]);
+            } else {
+                // If no referrer, just redirect to the data_pernyataan.php
+                header("Location: data_pernyataan.php");
+            }
+            exit();
         } else {
             // Respond with an error message if the deletion fails
             echo json_encode(['success' => false, 'message' => 'Failed to delete the record.']);

@@ -310,7 +310,7 @@ $(document).ready(function() {
         window.location.href = 'edit_pernyataan.php?id=' + id;  // Redirect to the edit page
     });
     // Handle the Delete button click event
-    $(".delete-btn").click(function() {
+     $(".delete-btn").click(function() {
         var id = $(this).data('id');
         
         // Confirm the delete action
