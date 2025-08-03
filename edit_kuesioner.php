@@ -202,10 +202,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <table id="tablePernyataan" class="table">
                                 <thead>
                                     <tr>
-                                        <th>ID Pernyataan</th>
                                         <th>Dimensi Layanan</th>
                                         <th>Pernyataan</th>
                                         <th>Rekomendasi Perbaikan</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -216,10 +217,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <?php else: ?>
                                         <?php while ($row_pernyataan = $result_pernyataan->fetch_assoc()): ?>
                                             <tr>
-                                                <td><?= $row_pernyataan['id_data_pernyataan'] ?></td>
                                                 <td><?= $row_pernyataan['dimensi_layanan'] ?></td>
                                                 <td><?= $row_pernyataan['pernyataan'] ?></td>
                                                 <td><?= $row_pernyataan['rekomendasi_perbaikan'] ?></td>
+                                                <td><?= $row_pernyataan['status'] ?></td>
+                                                <td>
+                                                    <button class="btn btn-primary btn-sm edit-btn" data-id="<?= $row_pernyataan['id_data_pernyataan'] ?>">Edit</button>
+                                                    <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $row_pernyataan['id_data_pernyataan'] ?>">Delete</button>
+                                                </td>
                                             </tr>
                                         <?php endwhile; ?>
                                     <?php endif; ?>
@@ -260,10 +265,10 @@ $(document).ready(function() {
                         var rows = '';
                         $.each(response.data, function(index, item) {
                             rows += '<tr>' +
-                                   '<td>' + (item.id_data_pernyataan || '') + '</td>' +
                                    '<td>' + (item.dimensi_layanan || '') + '</td>' +
                                    '<td>' + (item.pernyataan || '') + '</td>' +
                                    '<td>' + (item.rekomendasi_perbaikan || '-') + '</td>' +
+                                   '<td>' + (item.status || '-') + '</td>' +
                                    '</tr>';
                         });
                         tbody.html(rows);
@@ -297,6 +302,40 @@ $(document).ready(function() {
         });
     });
 });
+
+$(document).ready(function() {
+    // Handle the Edit button click event
+    $(".edit-btn").click(function() {
+        var id = $(this).data('id');
+        window.location.href = 'edit_pernyataan.php?id=' + id;  // Redirect to the edit page
+    });
+    // Handle the Delete button click event
+    $(".delete-btn").click(function() {
+        var id = $(this).data('id');
+        
+        // Confirm the delete action
+        if (confirm("Are you sure you want to delete this record?")) {
+            $.ajax({
+                url: 'delete_pernyataan.php',  // URL of the delete script
+                type: 'GET',
+                data: { id: id },  // Send the id to be deleted
+                dataType: 'json',  // Expect JSON response
+                success: function(response) {
+                    if (response.success) {
+                        alert("Record deleted successfully!");  // Show success message
+                        location.reload();  // Reload the page to reflect changes
+                    } else {
+                        alert("Error deleting record: " + response.message);  // Show error message
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert("An error occurred: " + error);  // Show AJAX error message
+                }
+            });
+        }
+    });
+});
+
 </script>
 <?php require "layout/js.php"; ?>
 </body>

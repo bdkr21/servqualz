@@ -24,12 +24,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $pernyataan_text = $_POST['pernyataan'];
     $rekomendasi_perbaikan = $_POST['rekomendasi_perbaikan'];
     $status = $_POST['status'];
+    $jenis_layanan = implode(',', $_POST['jenis_layanan']); // Combine selected checkboxes into a string
 
     // Update the data in the database
-    $query_update = "UPDATE data_pernyataan SET dimensi_layanan = ?, pernyataan = ?, rekomendasi_perbaikan = ?, status = ? WHERE id_data_pernyataan = ?";
+    $query_update = "UPDATE data_pernyataan SET dimensi_layanan = ?, pernyataan = ?, rekomendasi_perbaikan = ?, status = ?, jenis_layanan = ? WHERE id_data_pernyataan = ?";
 
     if ($stmt_update = $db->prepare($query_update)) {
-        $stmt_update->bind_param("ssssi", $dimensi_layanan, $pernyataan_text, $rekomendasi_perbaikan, $status, $id_data_pernyataan);
+        $stmt_update->bind_param("sssssi", $dimensi_layanan, $pernyataan_text, $rekomendasi_perbaikan, $status, $jenis_layanan, $id_data_pernyataan);
 
         if ($stmt_update->execute()) {
             // Redirect to the data_pernyataan page
@@ -115,6 +116,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <option value="aktif" <?php echo ($pernyataan['status'] == 'aktif') ? 'selected' : ''; ?>>Aktif</option>
                                         <option value="tidak aktif" <?php echo ($pernyataan['status'] == 'tidak aktif') ? 'selected' : ''; ?>>Tidak Aktif</option>
                                     </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="jenis_layanan">Jenis Layanan:</label><br>
+                                    <?php
+                                    // Query to fetch available jenis_layanan from layanan table
+                                    $query_layanan = "SELECT jenis_layanan FROM layanan";
+                                    $result_layanan = $db->query($query_layanan);
+
+                                    // Loop through and generate checkboxes with pre-selected ones
+                                    $selected_layanan = explode(',', $pernyataan['jenis_layanan']); // Get selected layanan values as an array
+                                    while ($row_layanan = $result_layanan->fetch_assoc()) {
+                                        $checked = in_array($row_layanan['jenis_layanan'], $selected_layanan) ? 'checked' : '';
+                                        echo "<label><input type='checkbox' name='jenis_layanan[]' value='{$row_layanan['jenis_layanan']}' $checked> {$row_layanan['jenis_layanan']}</label><br>";
+                                    }
+                                    ?>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">Update Pernyataan</button>

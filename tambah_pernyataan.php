@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error = "All fields are required!";
     } else {
         // Check if dimensi_layanan is a valid value in ENUM
-        $valid_dimensi_layanan = ['reliability', 'assurance', 'tangibles', 'empathy', 'responsiveness'];
+        $valid_dimensi_layanan = ['reliability', 'assurance', 'tangibels', 'empathy', 'responsiveness'];
         if (!in_array($dimensi_layanan, $valid_dimensi_layanan)) {
             $error = "Invalid Dimensi Layanan value!";
         } else {
