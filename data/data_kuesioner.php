@@ -2,8 +2,13 @@
 // Ensure the database connection is available
 require __DIR__ . '/../include/conn.php';
 
-// Query to fetch all data from 'data_kuesioner' table
-$query = "SELECT * FROM data_kuesioner";
+// Query to fetch all data from 'data_kuesioner' table and join with 'servqual' to get 'dimensi_layanan' and 'layanan' to get 'jenis_layanan'
+$query = "
+    SELECT dk.id_data_kuesioner, dk.nama_kuesioner, dk.status, dk.jenis_layanan, s.dimensi_layanan, l.jenis_layanan AS jenis_layanan_name
+    FROM data_kuesioner dk
+    LEFT JOIN servqual s ON dk.dimensi_layanan = s.id_servqual
+    LEFT JOIN layanan l ON FIND_IN_SET(l.id_jenis_layanan, dk.jenis_layanan)
+";
 $result = $db->query($query);
 
 // Check for query errors
@@ -35,11 +40,19 @@ if (!$result) {
                         $row_number = 1;
                         // Loop through the results and display each row of data
                         while ($row = $result->fetch_assoc()) {
+                            // Fetching the jenis_layanan names and displaying them
+                            $jenis_layanan_names = explode(',', $row['jenis_layanan']);
+                            $jenis_layanan_display = [];
+                            foreach ($jenis_layanan_names as $jenis_id) {
+                                $jenis_layanan_display[] = $row['jenis_layanan_name']; // Replace with actual 'jenis_layanan' name
+                            }
+                            $jenis_layanan_display = implode(', ', $jenis_layanan_display);
+
                             echo "<tr>
                                     <th scope='row'>{$row_number}</th>
                                     <td>{$row['nama_kuesioner']}</td>
                                     <td>{$row['dimensi_layanan']}</td>
-                                    <td>{$row['jenis_layanan']}</td>
+                                    <td>{$jenis_layanan_display}</td>
                                     <td>{$row['status']}</td>
                                     <td>
                                         <a href='edit_kuesioner.php?id={$row['id_data_kuesioner']}'>Edit</a> | 

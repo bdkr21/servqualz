@@ -13,17 +13,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Handle the selected jenis_layanan
     $jenis_layanan = isset($_POST['jenis_layanan']) ? implode(',', $_POST['jenis_layanan']) : '';  // Store the selected services as a comma-separated string
 
+    // Check if the dimensi_layanan is selected
+    $dimensi_layanan = isset($_POST['dimensi_layanan']) ? $_POST['dimensi_layanan'] : ''; // Assume dimensi_layanan is passed in the form
+
     // Validate inputs
-    if (empty($nama_kuesioner) || empty($status) || empty($jenis_layanan)) {
+    if (empty($nama_kuesioner) || empty($status) || empty($jenis_layanan) || empty($dimensi_layanan)) {
         $error = "All fields are required!";
     } else {
         // Insert the new kuesioner into the database
-        $query = "INSERT INTO data_kuesioner (nama_kuesioner, status, jenis_layanan) 
-                  VALUES (?, ?, ?)";
+        $query = "INSERT INTO data_kuesioner (nama_kuesioner, status, jenis_layanan, dimensi_layanan) 
+                  VALUES (?, ?, ?, ?)";
 
         if ($stmt = $db->prepare($query)) {
             // Bind parameters
-            $stmt->bind_param("sss", $nama_kuesioner, $status, $jenis_layanan);
+            $stmt->bind_param("ssss", $nama_kuesioner, $status, $jenis_layanan, $dimensi_layanan);
 
             // Execute the query
             if ($stmt->execute()) {
@@ -88,15 +91,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="dimensi_layanan">Dimensi Layanan:</label>
+                                    <select name="dimensi_layanan" id="dimensi_layanan" class="form-control" required>
+                                        <option value="">Select Dimensi Layanan</option>
+                                        <?php
+                                        // Query to fetch available dimensi_layanan and their corresponding ids from servqual table
+                                        $query_servqual = "SELECT id_servqual, dimensi_layanan FROM servqual";
+                                        $result_servqual = $db->query($query_servqual);
+
+                                        // Loop through and generate options
+                                        while ($row_servqual = $result_servqual->fetch_assoc()) {
+                                            echo "<option value='{$row_servqual['id_servqual']}'>{$row_servqual['dimensi_layanan']}</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="jenis_layanan">Jenis Layanan:</label><br>
                                     <?php
-                                    // Query to fetch available jenis_layanan from layanan table
-                                    $query_layanan = "SELECT jenis_layanan FROM layanan";
+                                    // Query to fetch available jenis_layanan from layanan table (use ids for the checkboxes)
+                                    $query_layanan = "SELECT id_jenis_layanan, jenis_layanan FROM layanan";
                                     $result_layanan = $db->query($query_layanan);
 
-                                    // Loop through and generate checkboxes for multiple services
+                                    // Loop through and generate checkboxes with ids
                                     while ($row_layanan = $result_layanan->fetch_assoc()) {
-                                        echo "<label><input type='checkbox' name='jenis_layanan[]' value='{$row_layanan['jenis_layanan']}'> {$row_layanan['jenis_layanan']}</label><br>";
+                                        echo "<label><input type='checkbox' name='jenis_layanan[]' value='{$row_layanan['id_jenis_layanan']}'> {$row_layanan['jenis_layanan']}</label><br>";
                                     }
                                     ?>
                                 </div>

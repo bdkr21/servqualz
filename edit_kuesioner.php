@@ -64,6 +64,8 @@ if (isset($_GET['id'])) {
 
         // Get the jenis_layanan from the selected kuesioner
         $jenis_layanan = $kuesioner['jenis_layanan'];
+        // Get the dimensi_layanan from the selected kuesioner
+        $dimensi_layanan = $kuesioner['dimensi_layanan'];  // This is the id_servqual
     }
 }
 
@@ -87,29 +89,44 @@ $status_values = $matches[1];
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nama_kuesioner = $_POST['nama_kuesioner'];
-    $dimensi_layanan = $_POST['dimensi_layanan'];
+    $dimensi_layanan = $_POST['dimensi_layanan'];  // This should be the id_servqual
     $status = $_POST['status'];
     $jenis_layanan = $_POST['jenis_layanan'];
 
+    // Check if any of the required fields are empty
     if (empty($dimensi_layanan) || empty($nama_kuesioner) || empty($status) || empty($jenis_layanan)) {
         $error = "All fields are required!";
     } else {
-        $query_update = "UPDATE data_kuesioner SET nama_kuesioner = ?, dimensi_layanan = ?, status = ?, jenis_layanan = ? WHERE id_data_kuesioner = ?";
-        
-        if ($stmt_update = $db->prepare($query_update)) {
-            $stmt_update->bind_param("ssssi", $nama_kuesioner, $dimensi_layanan, $status, $jenis_layanan, $id_data_kuesioner);
-            
-            if ($stmt_update->execute()) {
-                header("Location: data_kuesioner.php");
-                exit();
-            } else {
-                $error = "Error: Could not update the record. " . $stmt_update->error;
-            }
+        // Ensure that dimensi_layanan exists in servqual table and get the corresponding id_servqual
+        $check_dimensi = "SELECT id_servqual FROM servqual WHERE id_servqual = ?";
+        $stmt_check_dimensi = $db->prepare($check_dimensi);
+        $stmt_check_dimensi->bind_param("i", $dimensi_layanan);
+        $stmt_check_dimensi->execute();
+        $result_check = $stmt_check_dimensi->get_result();
 
-            $stmt_update->close();
+        // If no matching dimensi_layanan is found, set error
+        if ($result_check->num_rows === 0) {
+            $error = "Invalid Dimensi Layanan value!";
+        } else {
+            // Proceed with updating the data_kuesioner table using the id_servqual
+            $query_update = "UPDATE data_kuesioner SET nama_kuesioner = ?, dimensi_layanan = ?, status = ?, jenis_layanan = ? WHERE id_data_kuesioner = ?";
+            
+            if ($stmt_update = $db->prepare($query_update)) {
+                $stmt_update->bind_param("ssssi", $nama_kuesioner, $dimensi_layanan, $status, $jenis_layanan, $id_data_kuesioner);
+                
+                if ($stmt_update->execute()) {
+                    header("Location: data_kuesioner.php");
+                    exit();
+                } else {
+                    $error = "Error: Could not update the record. " . $stmt_update->error;
+                }
+
+                $stmt_update->close();
+            }
         }
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -148,6 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="alert alert-danger"><?php echo $error; ?></div>
                             <?php endif; ?>
 
+                            <!-- Form for editing -->
                             <form action="edit_kuesioner.php?id=<?php echo $id_data_kuesioner; ?>" method="POST">
                                 <div class="form-group">
                                     <label for="nama_kuesioner">Nama Kuesioner:</label>
@@ -159,10 +177,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <select name="dimensi_layanan" id="dimensi_layanan" class="form-control" required>
                                         <option value="">Select Dimensi Layanan</option>
                                         <?php
-                                        $query_servqual = "SELECT dimensi_layanan FROM servqual";
+                                        // Fetch the dimensi_layanan and id_servqual from servqual table
+                                        $query_servqual = "SELECT id_servqual, dimensi_layanan FROM servqual";
                                         $result_servqual = $db->query($query_servqual);
+                                        
+                                        // Loop through and generate the options
                                         while ($row_servqual = $result_servqual->fetch_assoc()) {
-                                            echo "<option value='{$row_servqual['dimensi_layanan']}' " . ($kuesioner['dimensi_layanan'] == $row_servqual['dimensi_layanan'] ? 'selected' : '') . ">{$row_servqual['dimensi_layanan']}</option>";
+                                            // Check if the current id_servqual matches the selected value
+                                            $selected = ($dimensi_layanan == $row_servqual['id_servqual']) ? 'selected' : '';
+                                            echo "<option value='{$row_servqual['id_servqual']}' {$selected}>{$row_servqual['dimensi_layanan']}</option>";
                                         }
                                         ?>
                                     </select>
@@ -173,7 +196,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <select name="status" id="status" class="form-control" required>
                                         <?php
                                         foreach ($status_values as $status_value) {
-                                            echo "<option value='{$status_value}' " . ($kuesioner['status'] == $status_value ? 'selected' : '') . ">{$status_value}</option>";
+                                            // Check if current status is selected
+                                            $selected = ($kuesioner['status'] == $status_value) ? 'selected' : '';
+                                            echo "<option value='{$status_value}' {$selected}>{$status_value}</option>";
                                         }
                                         ?>
                                     </select>
@@ -184,11 +209,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <select name="jenis_layanan" id="jenis_layanan" class="form-control" required>
                                         <option value="">Select Jenis Layanan</option>
                                         <?php
-                                        $query_layanan = "SELECT jenis_layanan FROM layanan";
+                                        // Query to fetch available layanan (services)
+                                        $query_layanan = "SELECT id_jenis_layanan, jenis_layanan FROM layanan";
                                         $result_layanan = $db->query($query_layanan);
+                                        
+                                        // Loop through and generate the options
                                         while ($row_layanan = $result_layanan->fetch_assoc()) {
-                                            $selected = ($kuesioner['jenis_layanan'] == $row_layanan['jenis_layanan']) ? 'selected' : '';
-                                            echo "<option value='{$row_layanan['jenis_layanan']}' {$selected}>{$row_layanan['jenis_layanan']}</option>";
+                                            // Check if the current jenis_layanan value matches the selected value
+                                            $selected = (in_array($row_layanan['id_jenis_layanan'], explode(',', $kuesioner['jenis_layanan']))) ? 'selected' : '';
+                                            echo "<option value='{$row_layanan['id_jenis_layanan']}' {$selected}>{$row_layanan['jenis_layanan']}</option>";
                                         }
                                         ?>
                                     </select>
@@ -206,7 +235,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <th>Pernyataan</th>
                                         <th>Rekomendasi Perbaikan</th>
                                         <th>Status</th>
-                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -221,10 +249,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                                 <td><?= $row_pernyataan['pernyataan'] ?></td>
                                                 <td><?= $row_pernyataan['rekomendasi_perbaikan'] ?></td>
                                                 <td><?= $row_pernyataan['status'] ?></td>
-                                                <td>
-                                                    <button class="btn btn-primary btn-sm edit-btn" data-id="<?= $row_pernyataan['id_data_pernyataan'] ?>">Edit</button>
-                                                    <button class="btn btn-danger btn-sm delete-btn" data-id="<?= $row_pernyataan['id_data_pernyataan'] ?>">Delete</button>
-                                                </td>
                                             </tr>
                                         <?php endwhile; ?>
                                     <?php endif; ?>
@@ -302,40 +326,6 @@ $(document).ready(function() {
         });
     });
 });
-
-$(document).ready(function() {
-    // Handle the Edit button click event
-    $(".edit-btn").click(function() {
-        var id = $(this).data('id');
-        window.location.href = 'edit_pernyataan.php?id=' + id;  // Redirect to the edit page
-    });
-    // Handle the Delete button click event
-     $(".delete-btn").click(function() {
-        var id = $(this).data('id');
-        
-        // Confirm the delete action
-        if (confirm("Are you sure you want to delete this record?")) {
-            $.ajax({
-                url: 'delete_pernyataan.php',  // URL of the delete script
-                type: 'GET',
-                data: { id: id },  // Send the id to be deleted
-                dataType: 'json',  // Expect JSON response
-                success: function(response) {
-                    if (response.success) {
-                        alert("Record deleted successfully!");  // Show success message
-                        location.reload();  // Reload the page to reflect changes
-                    } else {
-                        alert("Error deleting record: " + response.message);  // Show error message
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert("An error occurred: " + error);  // Show AJAX error message
-                }
-            });
-        }
-    });
-});
-
 </script>
 <?php require "layout/js.php"; ?>
 </body>

@@ -5,11 +5,16 @@ require __DIR__ . '/../include/conn.php';
 // Get search term from the URL or form input
 $search_term = isset($_GET['search']) ? $_GET['search'] : '';
 
-// Query to fetch all transactions along with the customer name from 'transaksi' and 'pelanggan' tables
-$query = "SELECT t.kode_transaksi, t.id_transaksi, t.tanggal_transaksi, t.jenis_layanan, t.pembayaran, p.nama 
-          FROM transaksi t
-          LEFT JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan
-          WHERE t.kode_transaksi LIKE ? OR p.nama LIKE ? OR t.tanggal_transaksi LIKE ?";
+// Query to fetch all transactions along with the customer name from 'transaksi', 'pelanggan', and 'layanan' tables
+$query = "
+    SELECT t.kode_transaksi, t.id_transaksi, t.tanggal_transaksi, t.pembayaran, p.nama, 
+           GROUP_CONCAT(l.jenis_layanan ORDER BY l.jenis_layanan ASC) AS jenis_layanan
+    FROM transaksi t
+    LEFT JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan
+    LEFT JOIN layanan l ON FIND_IN_SET(l.jenis_layanan, t.jenis_layanan)
+    WHERE t.kode_transaksi LIKE ? OR p.nama LIKE ? OR t.tanggal_transaksi LIKE ?
+    GROUP BY t.id_transaksi
+";
 
 // Prepare the query
 $stmt = $db->prepare($query);
@@ -56,7 +61,7 @@ if (!$result) {
                                     <td>{$row['kode_transaksi']}</td>
                                     <td>{$row['nama']}</td>
                                     <td>{$row['tanggal_transaksi']}</td>
-                                    <td>{$row['jenis_layanan']}</td>
+                                    <td>{$row['jenis_layanan']}</td> <!-- Displaying jenis_layanan from layanan table -->
                                     <td>{$row['pembayaran']}</td>
                                     <td><a href='edit_transaksi.php?id={$row['id_transaksi']}'>Edit</a> | <a href='delete_transaksi.php?id={$row['id_transaksi']}'>Delete</a></td>
                                   </tr>";

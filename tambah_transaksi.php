@@ -33,12 +33,13 @@ function generateKodeTransaksi() {
 }
 
 // Check if the form is submitted
+// Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Get the data from the form
     $nama = $_POST['nama'];  // Added field for customer name
     $no_telp = $_POST['no_telp'];
     $tanggal_lahir = $_POST['tanggal_lahir'];
-    
+
     // Get the selected services from the checkboxes
     $selected_services = isset($_POST['jenis_layanan']) ? implode(',', $_POST['jenis_layanan']) : ''; // jenis_layanan
     
@@ -77,11 +78,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         // Send WhatsApp message using Whapify API
                         $whatsapp_api_url = "https://whapify.id/api/send/whatsapp";
                         $whatsapp_data = [
-                            "secret" => "daf42e9b8914337a175eb2419e560f4a3d74a131", // Replace with your API secret
-                            "account" => "1753812583fa83a11a198d5a7f0bf77a1987bcd00668890e679d008", // Replace with your unique account ID
+                            "secret" => "", // Replace with your API secret
+                            "account" => "", // Replace with your unique account ID
                             "recipient" => $no_telp, // Customer phone number
                             "type" => "text",
-                            "message" => "Terima kasih telah melakukan transaksi di HETTIE PROFESSIONAL HAIRSTYLIST! Kode transaksi Anda adalah: *" . $kode_transaksi . "*.\n\n" .
+                            "message" => "Terima kasih telah melakukan transaksi di HETTIE PROFESSIONAL HAIRSTYLIST! Kode transaksi Anda adalah: *" . $kode_transaksi . "*.\n\n" . 
                             "Kode transaksi ini dapat digunakan untuk mengisi **kuesioner** dan memberikan **keluhan** melalui website kami. " .
                             "Silakan gunakan kode transaksi ini pada halaman yang sesuai untuk memberikan masukan dan feedback tentang layanan kami.\n\n" .
                             "Kami menghargai partisipasi Anda dalam membantu kami meningkatkan kualitas layanan kami. https://servqualz.chandramlnh.my.id/index_pelanggan.php\n\n" .
@@ -219,10 +220,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <label for="jenis_layanan">Jenis Layanan:</label><br>
                                     <?php
                                     // Query to fetch available layanan (services)
-                                    $query_layanan = "SELECT id_jenis_layanan, jenis_layanan FROM layanan";
+                                    $query_layanan = "SELECT jenis_layanan FROM layanan";
                                     $result_layanan = $db->query($query_layanan);
 
-                                    // Loop through and generate checkboxes
+                                    // Loop through and generate checkboxes with the id_jenis_layanan
                                     while ($row_layanan = $result_layanan->fetch_assoc()) {
                                         echo "<label><input type='checkbox' name='jenis_layanan[]' value='{$row_layanan['jenis_layanan']}'> {$row_layanan['jenis_layanan']}</label><br>";
                                     }
