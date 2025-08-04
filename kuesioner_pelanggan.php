@@ -7,7 +7,7 @@ if (isset($_GET['kode_transaksi'])) {
 
     // Query to fetch the kode_transaksi and related jenis_layanan
     $query_transaksi = "
-      SELECT t.kode_transaksi, t.pembayaran, p.nama, t.jenis_layanan
+      SELECT t.kode_transaksi, t.pembayaran, p.nama, t.jenis_layanan, t.id_pelanggan
       FROM transaksi t
       JOIN pelanggan p ON t.id_pelanggan = p.id_pelanggan
       WHERE t.kode_transaksi = ?";
@@ -23,6 +23,8 @@ if (isset($_GET['kode_transaksi'])) {
     $row = $res->fetch_assoc();
     $stmt->close();
 
+    $id_pelanggan = $row['id_pelanggan']; // Get the id_pelanggan for validation
+
     if ($row['pembayaran'] !== 'lunas') {
         $error = "Transaction not paid yet. You cannot fill the questionnaire.";
     }
@@ -35,7 +37,7 @@ if (isset($_GET['kode_transaksi'])) {
         $selected_service = isset($_GET['service']) ? $_GET['service'] : $services[0];
 
         $query_nama_kuesioner = "
-            SELECT nama_kuesioner
+            SELECT nama_kuesioner, id_data_kuesioner
             FROM data_kuesioner
             WHERE FIND_IN_SET(?, jenis_layanan) > 0
             AND status = 'publish'
@@ -48,6 +50,7 @@ if (isset($_GET['kode_transaksi'])) {
         if ($result_kuesioner->num_rows > 0) {
             $kuesioner = $result_kuesioner->fetch_assoc();
             $nama_kuesioner = $kuesioner['nama_kuesioner'];
+            $id_data_kuesioner = $kuesioner['id_data_kuesioner']; // Get the ID of the selected kuesioner
         } else {
             $error = "No matching kuesioner found.";
         }
@@ -65,7 +68,8 @@ if (isset($_GET['kode_transaksi'])) {
           WHERE p.status='aktif'
             AND k.status='publish'
             AND FIND_IN_SET(?, p.jenis_layanan)
-          LIMIT ?, ?";
+          LIMIT ?, ?
+        ";
 
         $query_pernyataan_harapan = "
           SELECT p.pernyataan
@@ -74,7 +78,8 @@ if (isset($_GET['kode_transaksi'])) {
           WHERE p.status='aktif'
             AND k.status='publish'
             AND FIND_IN_SET(?, p.jenis_layanan)
-          LIMIT ?, ?";
+          LIMIT ?, ?
+        ";
 
         // Execute both queries
         if ($stmt_pernyataan_kenyataan = $db->prepare($query_pernyataan_kenyataan)) {
@@ -122,9 +127,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['jawab_kenyataan']) &&
     // Loop through each pernyataan
     foreach ($_POST['jawab_kenyataan'] as $index => $jawaban_kenyataan) {
         $jawaban_harapan = $_POST['jawab_harapan'][$index];
-        
+
         // Calculate the gap (difference between Kenyataan and Harapan)
         $gap = $jawaban_kenyataan - $jawaban_harapan;
+
+        // Check if id_data_kuesioner is valid before inserting
+        $query_check_service = "
+            SELECT id_data_kuesioner 
+            FROM data_kuesioner 
+            WHERE id_data_kuesioner = ?
+        ";
+        $stmt_check_service = $db->prepare($query_check_service);
+        $stmt_check_service->bind_param("i", $id_data_kuesioner);
+        $stmt_check_service->execute();
+        $result_check_service = $stmt_check_service->get_result();
+
+        if ($result_check_service->num_rows === 0) {
+            $error = "Invalid service ID: No matching kuesioner found.";
+            break;
+        }
+
+        $stmt_check_service->close();
 
         // Insert the answers into the kuesioner table
         $query_insert = "
@@ -132,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['jawab_kenyataan']) &&
             VALUES (?, ?, ?)
         ";
         $stmt_insert = $db->prepare($query_insert);
-        $stmt_insert->bind_param("iis", $selected_service, $kode_transaksi, $tgl_pengisian);
+        $stmt_insert->bind_param("iis", $id_data_kuesioner, $id_pelanggan, $tgl_pengisian);
         $stmt_insert->execute();
 
         if ($stmt_insert->affected_rows > 0) {
@@ -233,13 +256,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['jawab_kenyataan']) &&
             </div>
             <button type="submit" class="btn btn-primary">Kirim Kuesioner</button>
           </form>
-
-          <!-- Pagination controls -->
-          <!-- <nav class="pagination">
-            <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-              <a href="?kode_transaksi=<?= urlencode($kode_transaksi) ?>&service=<?= urlencode($selected_service) ?>&page=<?= $p ?>"><?= $p ?></a>
-            <?php endfor ?>
-          </nav> -->
         <?php else: ?>
           <p>No active kuesioner found for this service.</p>
         <?php endif ?>
